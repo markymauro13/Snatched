@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var isExpanded = true
     @State private var viewID = UUID()
     @Namespace private var animation
+    @State private var showingStreakView = false
 
     func resetToHome() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
@@ -47,6 +48,24 @@ struct HomeView: View {
                     .frame(maxWidth: 280)
                 }
                 .frame(maxHeight: .infinity)
+                
+                Button {
+                    showingStreakView.toggle()
+                } label: {
+                    Label("View Streak", systemImage: "chart.line.uptrend.xyaxis")
+                        .font(.headline)
+                        .foregroundColor(.purple)
+                        .padding()
+                        .background(Color.purple.opacity(0.1))
+                        .cornerRadius(10)
+                }
+                .sheet(isPresented: $showingStreakView) {
+                    StreakGridView()
+                        .presentationDetents([.height(250)])
+                        .presentationDragIndicator(.visible)
+                }
+                
+                Spacer()
             } else {
                 // Collapsed header with workout buttons
                 HStack {
