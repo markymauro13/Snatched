@@ -41,8 +41,16 @@ struct StreakGridView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHGrid(rows: rows, spacing: 4) {
                         ForEach(0..<(weeks * 7), id: \.self) { index in
-                            let startOfMonth = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: Date()))!
-                            let date = Calendar.current.date(byAdding: .day, value: index, to: startOfMonth)!
+                            let calendar = Calendar.current
+                            // Get start of current month
+                            let currentDate = Date()
+                            let currentMonth = calendar.component(.month, from: currentDate)
+                            
+                            // Go back 2 months from current month
+                            let twoMonthsAgo = calendar.date(byAdding: .month, value: -2, to: currentDate)!
+                            let startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: twoMonthsAgo))!
+                            
+                            let date = calendar.date(byAdding: .day, value: index, to: startDate)!
                             ContributionCell(date: date, streaks: streakManager.streaks)
                         }
                     }
@@ -56,18 +64,22 @@ struct StreakGridView: View {
     
     private func getMonthLabels() -> [String] {
         let calendar = Calendar.current
-        let startDate = Date()
+        let currentDate = Date()
+        
+        // Go back 2 months from current month
+        let twoMonthsAgo = calendar.date(byAdding: .month, value: -2, to: currentDate)!
+        let startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: twoMonthsAgo))!
         let endDate = calendar.date(byAdding: .day, value: (weeks * 7 - 1), to: startDate)!
         
         var months: [String] = []
-        var currentDate = startDate
+        var currentDateIterator = startDate
         
-        while currentDate <= endDate {
-            let month = calendar.component(.month, from: currentDate)
-            if months.isEmpty || month != calendar.component(.month, from: calendar.date(byAdding: .day, value: -1, to: currentDate)!) {
+        while currentDateIterator <= endDate {
+            let month = calendar.component(.month, from: currentDateIterator)
+            if months.isEmpty || month != calendar.component(.month, from: calendar.date(byAdding: .day, value: -1, to: currentDateIterator)!) {
                 months.append(calendar.shortMonthSymbols[month - 1])
             }
-            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+            currentDateIterator = calendar.date(byAdding: .day, value: 1, to: currentDateIterator)!
         }
         
         return months

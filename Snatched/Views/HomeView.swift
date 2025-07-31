@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var viewID = UUID()
     @Namespace private var animation
     @State private var showingStreakView = false
+    @State private var showingProfileView = false
 
     func resetToHome() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
@@ -49,20 +50,36 @@ struct HomeView: View {
                 }
                 .frame(maxHeight: .infinity)
                 
-                Button {
-                    showingStreakView.toggle()
-                } label: {
-                    Label("View Streak", systemImage: "chart.line.uptrend.xyaxis")
-                        .font(.headline)
-                        .foregroundColor(.purple)
-                        .padding()
-                        .background(Color.purple.opacity(0.1))
-                        .cornerRadius(10)
-                }
-                .sheet(isPresented: $showingStreakView) {
-                    StreakGridView()
-                        .presentationDetents([.height(250)])
-                        .presentationDragIndicator(.visible)
+                HStack(spacing: 16) {
+                    Button {
+                        showingStreakView.toggle()
+                    } label: {
+                        Label("View Streak", systemImage: "chart.line.uptrend.xyaxis")
+                            .font(.headline)
+                            .foregroundColor(.purple)
+                            .padding()
+                            .background(Color.purple.opacity(0.1))
+                            .cornerRadius(10)
+                    }
+                    .sheet(isPresented: $showingStreakView) {
+                        StreakGridView()
+                            .presentationDetents([.height(250)])
+                            .presentationDragIndicator(.visible)
+                    }
+                    
+                    Button {
+                        showingProfileView.toggle()
+                    } label: {
+                        Label("Profile", systemImage: "person.circle")
+                            .font(.headline)
+                            .foregroundColor(.purple)
+                            .padding()
+                            .background(Color.purple.opacity(0.1))
+                            .cornerRadius(10)
+                    }
+                    .sheet(isPresented: $showingProfileView) {
+                        ProfileView()
+                    }
                 }
                 
                 Spacer()

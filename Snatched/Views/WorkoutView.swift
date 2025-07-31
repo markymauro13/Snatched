@@ -4,6 +4,8 @@ struct WorkoutView: View {
     let workoutType: WorkoutType
     @StateObject private var viewModel: WorkoutViewModel
     @State private var isShowingResults = false
+    @State private var showingProfileView = false
+    @StateObject private var profileManager = ProfileManager.shared
     let resetToHome: () -> Void
     
     // Define ranges for inputs
@@ -101,8 +103,34 @@ struct WorkoutView: View {
                 
                 // Weight Picker
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("Your Weight (lbs)", systemImage: "figure.arms.open")
-                        .font(.headline)
+                    HStack {
+                        Label("Your Weight (lbs)", systemImage: "figure.arms.open")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        if profileManager.hasValidWeight() {
+                            Button {
+                                showingProfileView.toggle()
+                            } label: {
+                                Text("Edit Profile")
+                                    .font(.caption)
+                                    .foregroundColor(.purple)
+                            }
+                        }
+                    }
+                    
+                    // Show weight source info
+                    if profileManager.hasValidWeight() && viewModel.workoutInput.weight == profileManager.userProfile.weight {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.caption)
+                            Text("Using weight from your profile")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
@@ -114,6 +142,28 @@ struct WorkoutView: View {
                                 range: 50...500,
                                 formatter: "%.1f"
                             )
+                            
+                            // Profile weight button (if available)
+                            if profileManager.hasValidWeight() {
+                                Button {
+                                    withAnimation(.spring()) {
+                                        viewModel.workoutInput.weight = profileManager.userProfile.weight
+                                    }
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "person.circle")
+                                            .font(.caption)
+                                        Text("\(profileManager.userProfile.weight, specifier: "%.1f")")
+                                    }
+                                    .font(.headline)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(viewModel.workoutInput.weight == profileManager.userProfile.weight ? Color.green : Color.green.opacity(0.2))
+                                    .foregroundColor(viewModel.workoutInput.weight == profileManager.userProfile.weight ? .white : .green)
+                                    .cornerRadius(8)
+                                    .animation(.spring(), value: viewModel.workoutInput.weight == profileManager.userProfile.weight)
+                                }
+                            }
                             
                             // Preset weight buttons
                             ForEach(weightPresets, id: \.self) { weight in
@@ -164,8 +214,25 @@ struct WorkoutView: View {
             }
             
             Spacer()
+            
+            // Exit Button - X button to return to home
+            Button {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    resetToHome()
+                }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(.gray.opacity(0.6))
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            }
+            .padding(.bottom, 20)
         }
         .padding()
+        .sheet(isPresented: $showingProfileView) {
+            ProfileView()
+        }
     }
 }
 
@@ -400,4 +467,8 @@ struct CustomInputSheet: View {
         .padding()
         .background(Color(UIColor.systemBackground))
     }
+}
+
+#Preview {
+    WorkoutView(workoutType: .stairMaster, resetToHome: {})
 }

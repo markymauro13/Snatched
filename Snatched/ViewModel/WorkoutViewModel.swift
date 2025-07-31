@@ -14,13 +14,16 @@ class WorkoutViewModel: ObservableObject {
     @Published var workoutResult = WorkoutResult(steps: 0, caloriesBurned: 0)
     
     init(workoutType: WorkoutType) {
-        // Initialize with default values specific to the workout type
+        // Initialize with cached weight from profile if available
+        let profileManager = ProfileManager.shared
+        let cachedWeight = profileManager.hasValidWeight() ? profileManager.userProfile.weight : 0
+        
         self.workoutInput = WorkoutInput(
             workoutType: workoutType,
             levelOrSpeed: workoutType == .stairMaster ? 1 : 1.0,
             incline: 0.0,
             time: 0,
-            weight: 0
+            weight: cachedWeight
         )
     }
 
