@@ -6,6 +6,8 @@ struct WorkoutView: View {
     @State private var isShowingResults = false
     @State private var showingProfileView = false
     @StateObject private var profileManager = ProfileManager.shared
+    @State private var showingSpeedLevelEdit = false
+    @State private var showingInclineEdit = false
     let resetToHome: () -> Void
     
     // Define ranges for inputs
@@ -45,9 +47,29 @@ struct WorkoutView: View {
                             .accentColor(.purple)
                         }
                         
-                        Text("\(viewModel.workoutInput.levelOrSpeed, specifier: workoutType == .stairMaster ? "%.0f" : "%.1f")")
-                            .font(.title3)
-                            .frame(width: 50)
+                        Button {
+                            showingSpeedLevelEdit = true
+                        } label: {
+                            Text("\(viewModel.workoutInput.levelOrSpeed, specifier: workoutType == .stairMaster ? "%.0f" : "%.1f")")
+                                .font(.title3)
+                                .foregroundColor(.purple)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.purple.opacity(0.1))
+                                .cornerRadius(6)
+                        }
+                        .frame(width: 50)
+                        .sheet(isPresented: $showingSpeedLevelEdit) {
+                            SpeedLevelEditSheet(
+                                isPresented: $showingSpeedLevelEdit,
+                                value: $viewModel.workoutInput.levelOrSpeed,
+                                workoutType: workoutType,
+                                levelRange: levelRange,
+                                speedRange: speedRange
+                            )
+                            .presentationDetents([.height(200)])
+                            .presentationDragIndicator(.visible)
+                        }
                     }
                 }
                 
@@ -63,9 +85,27 @@ struct WorkoutView: View {
                                    step: 0.5)
                             .accentColor(.purple)
                             
-                            Text("\(viewModel.workoutInput.incline, specifier: "%.1f")")
-                                .font(.title3)
-                                .frame(width: 50)
+                            Button {
+                                showingInclineEdit = true
+                            } label: {
+                                Text("\(viewModel.workoutInput.incline, specifier: "%.1f")")
+                                    .font(.title3)
+                                    .foregroundColor(.purple)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.purple.opacity(0.1))
+                                    .cornerRadius(6)
+                            }
+                            .frame(width: 50)
+                            .sheet(isPresented: $showingInclineEdit) {
+                                InclineEditSheet(
+                                    isPresented: $showingInclineEdit,
+                                    value: $viewModel.workoutInput.incline,
+                                    inclineRange: inclineRange
+                                )
+                                .presentationDetents([.height(200)])
+                                .presentationDragIndicator(.visible)
+                            }
                         }
                     }
                 }
@@ -466,6 +506,146 @@ struct CustomInputSheet: View {
         }
         .padding()
         .background(Color(UIColor.systemBackground))
+    }
+}
+
+// Speed/Level Edit Sheet
+struct SpeedLevelEditSheet: View {
+    @Binding var isPresented: Bool
+    @Binding var value: Double
+    let workoutType: WorkoutType
+    let levelRange: ClosedRange<Int>
+    let speedRange: ClosedRange<Double>
+    
+    @State private var tempValue: String = ""
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Title and Close Button
+            HStack {
+                Text("Edit \(workoutType == .stairMaster ? "Level" : "Speed")")
+                    .font(.headline)
+                Spacer()
+                Button {
+                    isPresented = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                        .font(.title3)
+                }
+            }
+            
+            // Input Field
+            TextField(workoutType == .stairMaster ? "Enter level" : "Enter speed", text: $tempValue)
+                .keyboardType(.decimalPad)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .multilineTextAlignment(.center)
+            
+            // Range Label
+            if workoutType == .stairMaster {
+                Text("Valid range: \(levelRange.lowerBound) - \(levelRange.upperBound)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } else {
+                Text("Valid range: \(speedRange.lowerBound, specifier: "%.1f") - \(speedRange.upperBound, specifier: "%.1f") mph")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            // Done Button
+            Button {
+                if let newValue = Double(tempValue) {
+                    let validRange: ClosedRange<Double>
+                    if workoutType == .stairMaster {
+                        validRange = Double(levelRange.lowerBound)...Double(levelRange.upperBound)
+                    } else {
+                        validRange = speedRange
+                    }
+                    
+                    if validRange.contains(newValue) {
+                        withAnimation {
+                            value = newValue
+                        }
+                        isPresented = false
+                    }
+                }
+            } label: {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.purple)
+                    .cornerRadius(8)
+            }
+        }
+        .padding()
+        .background(Color(UIColor.systemBackground))
+        .onAppear {
+            tempValue = String(format: workoutType == .stairMaster ? "%.0f" : "%.1f", value)
+        }
+    }
+}
+
+// Incline Edit Sheet
+struct InclineEditSheet: View {
+    @Binding var isPresented: Bool
+    @Binding var value: Double
+    let inclineRange: ClosedRange<Double>
+    
+    @State private var tempValue: String = ""
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Title and Close Button
+            HStack {
+                Text("Edit Incline")
+                    .font(.headline)
+                Spacer()
+                Button {
+                    isPresented = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                        .font(.title3)
+                }
+            }
+            
+            // Input Field
+            TextField("Enter incline %", text: $tempValue)
+                .keyboardType(.decimalPad)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .multilineTextAlignment(.center)
+            
+            // Range Label
+            Text("Valid range: \(inclineRange.lowerBound, specifier: "%.1f")% - \(inclineRange.upperBound, specifier: "%.1f")%")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            // Done Button
+            Button {
+                if let newValue = Double(tempValue),
+                   inclineRange.contains(newValue) {
+                    withAnimation {
+                        value = newValue
+                    }
+                    isPresented = false
+                }
+            } label: {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.purple)
+                    .cornerRadius(8)
+            }
+        }
+        .padding()
+        .background(Color(UIColor.systemBackground))
+        .onAppear {
+            tempValue = String(format: "%.1f", value)
+        }
     }
 }
 

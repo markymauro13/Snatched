@@ -15,6 +15,7 @@ struct HomeView: View {
     @Namespace private var animation
     @State private var showingStreakView = false
     @State private var showingProfileView = false
+    @State private var showingAnalyticsView = false
 
     func resetToHome() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
@@ -26,6 +27,44 @@ struct HomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Top Navigation Bar
+            HStack {
+                Text("Snatched")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.purple)
+                
+                Spacer()
+                
+                Button {
+                    showingAnalyticsView.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chart.bar.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("Analytics")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        LinearGradient(
+                            colors: [.purple, .blue],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(16)
+                    .shadow(color: .purple.opacity(0.3), radius: 3, x: 0, y: 1)
+                }
+                .sheet(isPresented: $showingAnalyticsView) {
+                    AnalyticsView()
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
             if isExpanded {
                 // Centered workout selection
                 VStack(spacing: 24) {
@@ -50,7 +89,7 @@ struct HomeView: View {
                 }
                 .frame(maxHeight: .infinity)
                 
-                HStack(spacing: 16) {
+                HStack(spacing: 24) {
                     Button {
                         showingStreakView.toggle()
                     } label: {
@@ -84,16 +123,53 @@ struct HomeView: View {
                 
                 Spacer()
             } else {
-                // Collapsed header with workout buttons
-                HStack {
-                    workoutButton(type: .stairMaster, title: "Stair Master")
-                        .matchedGeometryEffect(id: "stairmaster", in: animation)
+                // Collapsed header with workout buttons and analytics
+                VStack(spacing: 8) {
+                    // Top bar with app name and analytics
+                    HStack {
+                        Text("Snatched")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.purple)
+                        
+                        Spacer()
+                        
+                        Button {
+                            showingAnalyticsView.toggle()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "chart.bar.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                Text("Analytics")
+                                    .font(.system(size: 14, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                LinearGradient(
+                                    colors: [.purple, .blue],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(20)
+                            .shadow(color: .purple.opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
+                    }
+                    .padding(.horizontal)
                     
-                    workoutButton(type: .treadmill, title: "Treadmill")
-                        .matchedGeometryEffect(id: "treadmill", in: animation)
+                    // Workout buttons
+                    HStack {
+                        workoutButton(type: .stairMaster, title: "Stair Master")
+                            .matchedGeometryEffect(id: "stairmaster", in: animation)
+                        
+                        workoutButton(type: .treadmill, title: "Treadmill")
+                            .matchedGeometryEffect(id: "treadmill", in: animation)
+                    }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
+                .padding(.vertical, 8)
             }
             
             // Workout View Container
